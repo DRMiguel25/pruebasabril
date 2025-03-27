@@ -1,0 +1,122 @@
+CREATE DATABASE cityExplorer;
+USE cityExplorer;
+
+-- Tabla Rol
+CREATE TABLE Rol (
+    id_rol INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    descripcion TEXT
+);
+
+-- Tabla Usuario
+CREATE TABLE Usuario (
+    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    apellidoP VARCHAR(50) NOT NULL,
+    apellidoM VARCHAR(50),
+    correo VARCHAR(100) UNIQUE NOT NULL,
+    contraseña VARCHAR(255) NOT NULL, 
+    id_rol INT NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_rol) REFERENCES Rol(id_rol) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Tabla Método de Pago (Definir antes de Pago)
+CREATE TABLE Metodo_Pago (
+    id_metodo_pago INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    descripcion TEXT
+);
+
+-- Tabla Categoría de Lugar
+CREATE TABLE Categoria_Lugar (
+    id_categoria INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL,
+    descripcion TEXT
+);
+
+-- Tabla Lugar
+CREATE TABLE Lugar (
+    id_lugar INT PRIMARY KEY AUTO_INCREMENT,
+    paginaWeb VARCHAR(255),
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    dias_servicio JSON, 
+    num_telefonico VARCHAR(15),
+    estado ENUM('Activo', 'Inactivo') DEFAULT 'Activo',
+    horario_apertura TIME,
+    horario_cierre TIME,
+    calle VARCHAR(100) NOT NULL,
+    numero_int VARCHAR(10) DEFAULT 'S/N',
+    numero_ext VARCHAR(10) NOT NULL,
+    colonia VARCHAR(100) NOT NULL,
+    codigo_postal CHAR(5) NOT NULL,
+    id_categoria INT NOT NULL,
+    id_usuario INT NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_categoria) REFERENCES Categoria_Lugar(id_categoria) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Tabla Comentario
+CREATE TABLE Comentario (
+    id_comentario INT PRIMARY KEY AUTO_INCREMENT,
+    contenido TEXT NOT NULL,
+    valoracion TINYINT(1) NOT NULL CHECK (valoracion BETWEEN 1 AND 5),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NOT NULL,
+    id_lugar INT NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_lugar) REFERENCES Lugar(id_lugar) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Tabla Favorito
+CREATE TABLE Favorito (
+    id_favorito INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    id_lugar INT NOT NULL,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_lugar) REFERENCES Lugar(id_lugar) ON DELETE CASCADE ON UPDATE CASCADE,
+    UNIQUE (id_usuario, id_lugar)
+);
+
+-- Tabla Pago
+CREATE TABLE Pago (
+    id_pago INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    id_lugar INT NOT NULL,
+    monto DECIMAL(10, 2) NOT NULL,
+    metodo_pago_id INT NOT NULL,
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_lugar) REFERENCES Lugar(id_lugar) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (metodo_pago_id) REFERENCES Metodo_Pago(id_metodo_pago) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Tabla Lista
+CREATE TABLE Lista (
+    id_lista INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    id_usuario INT NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Tabla Lista_Lugar
+CREATE TABLE Lista_Lugar (
+    id_lista_lugar INT PRIMARY KEY AUTO_INCREMENT,
+    id_lista INT NOT NULL,
+    id_lugar INT NOT NULL,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_lista) REFERENCES Lista(id_lista) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_lugar) REFERENCES Lugar(id_lugar) ON DELETE CASCADE ON UPDATE CASCADE,
+    UNIQUE (id_lista, id_lugar)
+);
+
+
+INSERT INTO Rol (nombre, descripcion) VALUES (Usuario, 'Rol con permisos totales');
+INSERT INTO Rol (nombre, descripcion) VALUES (Anunciante, 'Rol para publicar lugares');
+INSERT INTO Rol (nombre, descripcion) VALUES (Administrador, 'Rol con permisos para controlar contenido');
